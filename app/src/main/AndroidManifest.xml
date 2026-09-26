@@ -96,6 +96,14 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name="com.google.ai.edge.gallery.rover.RoverVisionActivity"
+            android:exported="true"
+            android:screenOrientation="portrait"
+            android:configChanges="uiMode"
+            android:theme="@style/Theme.Gallery"
+            tools:ignore="DiscouragedApi,LockedOrientationActivity" />
+
         <!-- Set themes for activities that are used for viewing open source licenses -->
         <activity
             android:name="com.google.android.gms.oss.licenses.OssLicensesMenuActivity"

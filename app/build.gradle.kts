@@ -68,6 +68,7 @@ android {
     compose = true
     buildConfig = true
   }
+  androidResources { noCompress += "tflite" }
 }
 
 kotlin {
@@ -108,6 +109,7 @@ dependencies {
   implementation(libs.camerax.camera2)
   implementation(libs.camerax.lifecycle)
   implementation(libs.camerax.view)
+  implementation(libs.mediapipe.tasks.vision)
   implementation(libs.openid.appauth)
   implementation(libs.androidx.splashscreen)
   implementation(libs.protobuf.javalite)

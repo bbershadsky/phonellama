@@ -16,6 +16,7 @@
 
 package com.google.ai.edge.gallery.ui.navigation
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.compose.BackHandler
@@ -79,6 +80,7 @@ import com.google.ai.edge.gallery.data.ModelDownloadStatusType
 import com.google.ai.edge.gallery.data.Task
 import com.google.ai.edge.gallery.data.isLegacyTasks
 import com.google.ai.edge.gallery.edgeserver.EdgeServerScreen
+import com.google.ai.edge.gallery.rover.RoverVisionActivity
 import com.google.ai.edge.gallery.voiceassistant.VoiceAssistantScreen
 import com.google.ai.edge.gallery.firebaseAnalytics
 import com.google.ai.edge.gallery.ui.benchmark.BenchmarkScreen
@@ -196,6 +198,7 @@ fun GalleryNavHost(
   ) {
     // Home screen — go directly, no promo.
     composable(route = ROUTE_HOMESCREEN) {
+      val context = LocalContext.current
       HomeScreen(
         modelManagerViewModel = modelManagerViewModel,
         tosViewModel = hiltViewModel(),
@@ -208,6 +211,9 @@ fun GalleryNavHost(
         onModelsClicked = { navController.navigate(ROUTE_MODEL_MANAGER) },
         onServerClicked = { navController.navigate(ROUTE_EDGE_SERVER) },
         onVoiceAssistantClicked = { navController.navigate(ROUTE_VOICE_ASSISTANT) },
+        onRoverClicked = {
+          context.startActivity(Intent(context, RoverVisionActivity::class.java))
+        },
         gm4 = false,
       )
     }

@@ -4,6 +4,22 @@
 
 PhoneLlama is a fork of [Google AI Edge Gallery](https://github.com/google-ai-edge/ai-edge-gallery) that keeps the full native on-device accelerated inference path, adds better model management, and exposes a local **OpenAI-compatible REST API** that any standard client (Open WebUI, DeerFlow, LM Studio, Jan, curl) can call over localhost or the local network.
 
+## Rover vision
+
+On-device object tracking from the phone camera. It does not run a language model in the tracking loop. Open it from the home drawer (**Rover vision**).
+
+The line at the top of the screen is the active camera and detector (`Rear camera · EfficientDet Lite0`, or the front camera after you switch). **People** locks the first person it sees and points the tilt arrow at the upper body. **All** shows every class and waits for a tap. **Front** / **Rear** swaps the lens without leaving the screen.
+
+The button beside **Reset** swaps the detector while the camera stays open:
+
+| Detector | What it is | Tradeoff |
+|---|---|---|
+| SSD | SSD MobileNet | Fastest, rougher boxes |
+| Lite0 | EfficientDet-Lite0 | Default balance of speed and boxes |
+| Lite2 | EfficientDet-Lite2 | Sharper boxes, slower |
+
+The table under the preview is condensed metrics: frames completed per second, the percent of camera frames dropped because a detection was still running, inference and end-to-end time (median/p95), the lock, and how far to tilt the phone to put the upper body at the center of the frame. Velocity numbers are a mock command, not motor output.
+
 ---
 
 ## Why PhoneLlama

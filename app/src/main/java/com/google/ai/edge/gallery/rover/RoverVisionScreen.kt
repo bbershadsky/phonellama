@@ -61,6 +61,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontFamily
@@ -76,7 +77,6 @@ import com.google.ai.edge.gallery.rover.inference.DetectorModel
 import com.google.ai.edge.gallery.rover.inference.MediaPipeObjectDetectorBackend
 import com.google.ai.edge.gallery.rover.safety.StopReason
 import com.google.ai.edge.gallery.rover.tracking.TargetSelector
-import com.google.ai.edge.gallery.rover.tracking.TrackStrategy
 import com.google.ai.edge.gallery.rover.tracking.Track
 import com.google.ai.edge.gallery.rover.ui.contentRect
 import com.google.ai.edge.gallery.rover.ui.aimPoint
@@ -199,18 +199,9 @@ fun RoverVisionScreen(onClose: () -> Unit) {
           .fillMaxWidth()
           .background(Color.Black.copy(alpha = 0.72f))
           .navigationBarsPadding()
-          .padding(12.dp),
-      verticalArrangement = Arrangement.spacedBy(2.dp),
+          .padding(horizontal = 12.dp, vertical = 4.dp),
+      verticalArrangement = Arrangement.spacedBy(0.dp),
     ) {
-      val status = cameraError?.takeIf { it.isNotBlank() } ?: ui.status
-      Text(
-        status,
-        color = Color.White,
-        fontSize = 12.sp,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-      )
-      StrategyDropdown(selected = ui.strategy, onSelect = { sessionRef.get()?.setStrategy(it) })
       HudTable(ui = ui, nowMs = nowMs)
       Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
         Button(onClick = { sessionRef.get()?.clearTarget() }, modifier = Modifier.weight(1f)) {
@@ -224,40 +215,49 @@ fun RoverVisionScreen(onClose: () -> Unit) {
       }
     }
 
-    Row(
-      modifier = Modifier.align(Alignment.TopStart).statusBarsPadding(),
-      verticalAlignment = Alignment.CenterVertically,
-    ) {
-      TextButton(onClick = onClose) { Text("Close", color = Color.White) }
-      TextButton(onClick = { sessionRef.get()?.setPersonsOnly(!ui.personsOnly) }) {
-        Text(
-          if (ui.personsOnly) "People" else "All",
-          color = if (ui.personsOnly) Color(0xFF69F0AE) else Color.White,
-        )
-      }
-      TextButton(
-        onClick = {
-          val nextFront = !useFrontRef.get()
-          useFrontRef.set(nextFront)
-          useFront = nextFront
-          sessionRef.get()?.setFacingFront(nextFront)
-          val provider = providerRef.get()
-          val preview = previewRef.get()
-          if (provider != null && preview != null) {
-            bindCamera(
-              provider = provider,
-              previewView = preview,
-              lifecycleOwner = lifecycleOwner,
-              executor = analysisExecutor,
-              sessionRef = sessionRef,
-              useFront = nextFront,
-              onError = { cameraError = it },
-            )
-          }
+    Column(modifier = Modifier.align(Alignment.TopStart).statusBarsPadding().fillMaxWidth()) {
+      Row(verticalAlignment = Alignment.CenterVertically) {
+        TextButton(onClick = onClose) { Text("Close", color = Color.White) }
+        TextButton(onClick = { sessionRef.get()?.setPersonsOnly(!ui.personsOnly) }) {
+          Text(
+            if (ui.personsOnly) "People" else "All",
+            color = if (ui.personsOnly) Color(0xFF69F0AE) else Color.White,
+          )
         }
-      ) {
-        Text(if (useFront) "Rear" else "Front", color = Color.White)
+        TextButton(
+          onClick = {
+            val nextFront = !useFrontRef.get()
+            useFrontRef.set(nextFront)
+            useFront = nextFront
+            sessionRef.get()?.setFacingFront(nextFront)
+            val provider = providerRef.get()
+            val preview = previewRef.get()
+            if (provider != null && preview != null) {
+              bindCamera(
+                provider = provider,
+                previewView = preview,
+                lifecycleOwner = lifecycleOwner,
+                executor = analysisExecutor,
+                sessionRef = sessionRef,
+                useFront = nextFront,
+                onError = { cameraError = it },
+              )
+            }
+          }
+        ) {
+          Text(if (useFront) "Rear" else "Front", color = Color.White)
+        }
       }
+      val status = cameraError?.takeIf { it.isNotBlank() } ?: ui.status
+      Text(
+        status,
+        color = Color.White,
+        fontSize = 12.sp,
+        lineHeight = 14.sp,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        modifier = Modifier.padding(start = 12.dp, end = 12.dp, bottom = 4.dp),
+      )
     }
 
     if (!permissionGranted) {
@@ -475,33 +475,6 @@ private fun DetectorDropdown(
 }
 
 @Composable
-private fun StrategyDropdown(selected: TrackStrategy, onSelect: (TrackStrategy) -> Unit) {
-  var open by remember { mutableStateOf(false) }
-  Box(modifier = Modifier.fillMaxWidth()) {
-    TextButton(onClick = { open = true }) {
-      Text(
-        "Track: ${selected.label}",
-        color = Color.White,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-        fontSize = 13.sp,
-      )
-    }
-    DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
-      TrackStrategy.entries.forEach { strategy ->
-        DropdownMenuItem(
-          text = { Text(strategy.label, maxLines = 1) },
-          onClick = {
-            onSelect(strategy)
-            open = false
-          },
-        )
-      }
-    }
-  }
-}
-
-@Composable
 private fun HudTable(ui: RoverUiState, nowMs: Long) {
   val command = ui.command
   val expired = command != null && nowMs - command.timestampMs > command.ttlMs
@@ -547,9 +520,14 @@ private fun HudTable(ui: RoverUiState, nowMs: Long) {
             modifier = Modifier.weight(1f),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            fontFamily = FontFamily.Monospace,
-            fontSize = 11.sp,
-            color = if (header) Color.White.copy(alpha = 0.65f) else Color.White,
+            style =
+              TextStyle(
+                fontFamily = FontFamily.Monospace,
+                fontSize = 11.sp,
+                lineHeight = 12.sp,
+                platformStyle = PlatformTextStyle(includeFontPadding = false),
+                color = if (header) Color.White.copy(alpha = 0.65f) else Color.White,
+              ),
           )
         }
       }
